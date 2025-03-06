@@ -1,689 +1,325 @@
 <?php
-session_start();
-require_once 'includes/db.php';
-require_once 'includes/functions.php';
+$page_title = "Dashboard - CryptoTrade Platform";
+$body_class = "dashboard-page";
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'user') {
-    header('Location: index.php');
-    exit;
-}
+require_once 'includes/auth_check.php';
 
 // Get user data
-$userId = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
+$full_name = $_SESSION['full_name'];
 
-// Get wallet data
-$walletData = getUserWallets($userId);
+// Get user wallets
+$wallets = get_user_wallets($user_id);
 
-// Get transaction history
-$transactions = getUserTransactions($userId, 10);
+// Get recent transactions
+$transactions = get_user_transactions($user_id, 5);
 
 // Get coin data
-$coinData = getCoinData();
+$coins = get_all_coins();
+
+require_once 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - CryptoTrade</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
-    <link rel="stylesheet" href="assets/css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="dashboard-body">
-    <!-- Header -->
-    <header class="dashboard-header">
-        <div class="container">
-            <div class="header-logo">
-                <i class="fas fa-wallet"></i>
-                <h1>CryptoTrade Dashboard</h1>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white bg-opacity-90 pt-24 pb-12 px-4">
+    <!-- Header with user info -->
+    <header class="container mx-auto mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Welcome, <?php echo htmlspecialchars($full_name); ?></h1>
+                <p class="text-slate-300">Your personal dashboard</p>
             </div>
-            <div class="header-user">
-                <div class="user-info">
-                    <p>Welcome back,</p>
-                    <p class="username"><?php echo htmlspecialchars($username); ?></p>
-                </div>
-                <div class="user-actions">
-                    <button class="icon-button" id="settings-button">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                    <a href="includes/logout.php" class="icon-button logout-button">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </a>
+            <div class="mt-4 md:mt-0 flex items-center space-x-4">
+                <button id="refresh-data" class="p-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <div class="text-right">
+                    <p class="text-sm text-slate-300">Total Balance</p>
+                    <p class="font-bold text-xl">
+                        $<?php 
+                            $total = 0;
+                            foreach ($wallets as $wallet) {
+                                $total += $wallet['value'];
+                            }
+                            echo number_format($total, 2);
+                        ?>
+                    </p>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="dashboard-main">
-        <div class="container">
-            <!-- Dashboard Tabs -->
-            <div class="dashboard-tabs">
-                <button class="tab-button active" data-tab="overview">Overview</button>
-                <button class="tab-button" data-tab="wallet">Wallet</button>
-                <button class="tab-button" data-tab="market">Market</button>
-                <button class="tab-button" data-tab="transactions">Transactions</button>
+    <!-- Main content -->
+    <main class="container mx-auto">
+        <!-- Tabs navigation -->
+        <div class="tabs-container mb-8">
+            <div class="flex border-b border-slate-700">
+                <button class="tab-trigger active-tab px-6 py-3 font-medium text-white border-b-2 border-blue-500" data-tab="overview">Overview</button>
+                <button class="tab-trigger px-6 py-3 font-medium text-slate-300 hover:text-white" data-tab="wallet">Wallet</button>
+                <button class="tab-trigger px-6 py-3 font-medium text-slate-300 hover:text-white" data-tab="market">Market</button>
+                <button class="tab-trigger px-6 py-3 font-medium text-slate-300 hover:text-white" data-tab="transactions">Transactions</button>
             </div>
+        </div>
 
-            <!-- Tab Content -->
-            <div class="tab-content">
-                <!-- Overview Tab -->
-                <div class="tab-pane active" id="overview">
-                    <div class="dashboard-grid">
-                        <!-- Market Overview Card -->
-                        <div class="dashboard-card large-card">
-                            <div class="card-header">
-                                <div>
-                                    <h2>Market Overview</h2>
-                                    <p class="card-subtitle">Real-time price updates every 30 seconds</p>
-                                </div>
-                                <button class="refresh-button" id="refresh-market">
-                                    <i class="fas fa-sync-alt"></i>
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div class="chart-container">
-                                    <div class="chart-header">
-                                        <div>
-                                            <h3>BTC/USD</h3>
-                                            <p class="price-up">$<?php echo number_format($coinData[0]['price'], 2); ?> <span>+<?php echo $coinData[0]['change24h']; ?>%</span></p>
-                                        </div>
-                                        <div class="chart-timeframes">
-                                            <button class="timeframe-button">1H</button>
-                                            <button class="timeframe-button active">1D</button>
-                                            <button class="timeframe-button">1W</button>
-                                            <button class="timeframe-button">1M</button>
-                                        </div>
-                                    </div>
-                                    <div class="chart" id="overview-chart"></div>
-                                    <div class="chart-timeline">
-                                        <span>09:00</span>
-                                        <span>12:00</span>
-                                        <span>15:00</span>
-                                        <span>18:00</span>
-                                        <span>21:00</span>
-                                    </div>
-                                </div>
-                            </div>
+        <!-- Overview Tab -->
+        <div class="tab-content" data-tab="overview">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Market Overview Card -->
+                <div class="card dashboard-card bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 col-span-1 md:col-span-2 shadow-xl shadow-indigo-900/20">
+                    <div class="card-header flex flex-row items-center justify-between pb-2">
+                        <div>
+                            <h2 class="text-xl font-bold">Market Overview</h2>
+                            <p class="text-sm text-slate-400">Real-time price updates every 30 seconds</p>
                         </div>
-
-                        <!-- Portfolio Balance Card -->
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <h2>Portfolio Balance</h2>
-                                <p class="card-subtitle">Your current holdings</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="h-[300px] w-full bg-slate-900 rounded-md p-4 relative overflow-hidden">
+                            <div class="absolute inset-0 w-full h-full opacity-20">
+                                <img src="https://images.unsplash.com/photo-1642790551116-18e150f248e5?w=800&q=80" alt="Trading Chart Background" class="w-full h-full object-cover">
                             </div>
-                            <div class="card-body">
-                                <div class="balance-overview">
-                                    <div class="balance-header">
-                                        <span>Total Balance</span>
-                                        <span class="total-balance">$<?php echo number_format(calculateTotalBalance($walletData), 2); ?></span>
+                            <div class="relative z-10 h-full w-full flex flex-col">
+                                <div class="flex justify-between mb-4">
+                                    <div>
+                                        <h3 class="font-bold text-lg">BTC/USD</h3>
+                                        <p class="text-green-500 font-medium">
+                                            $<?php echo number_format($coins[0]['price'], 2); ?>
+                                            <span class="text-xs ml-1">+<?php echo $coins[0]['change24h']; ?>%</span>
+                                        </p>
                                     </div>
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 100%;"></div>
+                                    <div class="flex space-x-2">
+                                        <button class="px-3 py-1 text-sm border border-indigo-800 rounded-md text-indigo-300 hover:bg-indigo-900/30 transition-colors">1H</button>
+                                        <button class="px-3 py-1 text-sm border border-indigo-800 rounded-md bg-indigo-900/40 text-indigo-300">1D</button>
+                                        <button class="px-3 py-1 text-sm border border-indigo-800 rounded-md text-indigo-300 hover:bg-indigo-900/30 transition-colors">1W</button>
+                                        <button class="px-3 py-1 text-sm border border-indigo-800 rounded-md text-indigo-300 hover:bg-indigo-900/30 transition-colors">1M</button>
                                     </div>
                                 </div>
-
-                                <div class="wallet-list">
-                                    <?php foreach ($walletData as $coin => $data): ?>
-                                    <div class="wallet-item">
-                                        <div class="wallet-info">
-                                            <div class="coin-icon <?php echo strtolower($coin); ?>">
-                                                <?php echo substr($coin, 0, 1); ?>
-                                            </div>
-                                            <div>
-                                                <p class="coin-name"><?php echo $coin; ?></p>
-                                                <p class="coin-amount"><?php echo $data['balance']; ?> <?php echo $coin; ?></p>
-                                            </div>
-                                        </div>
-                                        <p class="coin-value">$<?php echo number_format($data['value'], 2); ?></p>
-                                    </div>
-                                    <?php endforeach; ?>
+                                <div class="flex-1 relative">
+                                    <canvas id="trading-chart" width="800" height="200" class="w-full h-full"></canvas>
+                                    <div class="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-slate-900 to-transparent"></div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions Card -->
-                        <div class="dashboard-card">
-                            <div class="card-header">
-                                <h2>Quick Actions</h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="action-buttons">
-                                    <button class="btn btn-primary btn-block" id="deposit-btn">
-                                        <i class="fas fa-arrow-down"></i> Add Funds
-                                    </button>
-                                    <button class="btn btn-outline btn-block" id="send-btn">
-                                        <i class="fas fa-paper-plane"></i> Send Funds
-                                    </button>
-                                    <button class="btn btn-secondary btn-block" id="withdraw-btn">
-                                        <i class="fas fa-arrow-up"></i> Withdraw
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recent Transactions Card -->
-                        <div class="dashboard-card large-card">
-                            <div class="card-header">
-                                <h2>Recent Transactions</h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="transactions-list">
-                                    <?php if (empty($transactions)): ?>
-                                    <p class="no-data">No transactions found</p>
-                                    <?php else: ?>
-                                        <?php foreach (array_slice($transactions, 0, 3) as $tx): ?>
-                                        <div class="transaction-item">
-                                            <div class="transaction-info">
-                                                <div class="transaction-icon <?php echo $tx['type']; ?>">
-                                                    <i class="fas fa-<?php echo $tx['type'] === 'deposit' ? 'arrow-down' : 'arrow-up'; ?>"></i>
-                                                </div>
-                                                <div>
-                                                    <p class="transaction-type"><?php echo ucfirst($tx['type']); ?></p>
-                                                    <p class="transaction-date"><?php echo date('M d, Y', strtotime($tx['date'])); ?></p>
-                                                </div>
-                                            </div>
-                                            <div class="transaction-details">
-                                                <p class="transaction-amount <?php echo $tx['type']; ?>">
-                                                    <?php echo $tx['type'] === 'deposit' ? '+' : '-'; ?><?php echo $tx['amount']; ?> <?php echo $tx['coin']; ?>
-                                                </p>
-                                                <p class="transaction-status"><?php echo $tx['status']; ?></p>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="view-all">
-                                    <button class="btn-link" id="view-all-transactions">View all transactions</button>
+                                <div class="mt-2 flex justify-between text-xs text-slate-400">
+                                    <span>09:00</span>
+                                    <span>12:00</span>
+                                    <span>15:00</span>
+                                    <span>18:00</span>
+                                    <span>21:00</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Wallet Tab -->
-                <div class="tab-pane" id="wallet">
-                    <div class="dashboard-card full-width">
-                        <div class="card-header">
-                            <h2>Your Wallets</h2>
-                            <p class="card-subtitle">Manage your cryptocurrency wallets</p>
+                <!-- Portfolio Balance Card -->
+                <div class="card dashboard-card bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
+                    <div class="card-header">
+                        <h2 class="text-xl font-bold">Portfolio Balance</h2>
+                        <p class="text-sm text-slate-400">Your current holdings</p>
+                    </div>
+                    <div class="card-body space-y-6">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-slate-400">Total Balance</span>
+                                <span class="text-2xl font-bold text-indigo-300">$<?php echo number_format($total, 2); ?></span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full">
+                                <div class="h-2 bg-blue-600 rounded-full" style="width: 100%"></div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <?php foreach ($walletData as $coin => $data): ?>
-                            <div class="wallet-card">
-                                <div class="wallet-header">
-                                    <div class="wallet-title">
-                                        <div class="coin-icon large <?php echo strtolower($coin); ?>">
-                                            <?php echo substr($coin, 0, 1); ?>
-                                        </div>
-                                        <div>
-                                            <h3><?php echo getCoinFullName($coin); ?></h3>
-                                            <p><?php echo $coin; ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="wallet-balance">
-                                        <p class="balance-amount"><?php echo $data['balance']; ?> <?php echo $coin; ?></p>
-                                        <p class="balance-value">$<?php echo number_format($data['value'], 2); ?></p>
-                                    </div>
-                                </div>
 
-                                <div class="wallet-address">
-                                    <span class="address-label">Wallet Address</span>
-                                    <div class="address-value">
-                                        <span class="address"><?php echo substr($data['address'], 0, 6) . '...' . substr($data['address'], -6); ?></span>
-                                        <button class="icon-button copy-address" data-address="<?php echo $data['address']; ?>">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
-                                        <button class="icon-button show-qr" data-coin="<?php echo $coin; ?>" data-address="<?php echo $data['address']; ?>">
-                                            <i class="fas fa-qrcode"></i>
-                                        </button>
+                        <div class="space-y-4">
+                            <?php foreach ($wallets as $coin => $data): ?>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <div class="crypto-icon crypto-icon-<?php echo strtolower($coin); ?>">
+                                        <?php echo substr($coin, 0, 1); ?>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium"><?php echo $coin; ?></p>
+                                        <p class="text-xs text-slate-400"><?php echo $data['balance']; ?> <?php echo $coin; ?></p>
                                     </div>
                                 </div>
-
-                                <div class="wallet-actions">
-                                    <button class="btn btn-primary deposit-btn" data-coin="<?php echo $coin; ?>">
-                                        <i class="fas fa-arrow-down"></i> Deposit
-                                    </button>
-                                    <button class="btn btn-outline send-btn" data-coin="<?php echo $coin; ?>">
-                                        <i class="fas fa-paper-plane"></i> Send
-                                    </button>
-                                    <button class="btn btn-secondary withdraw-btn" data-coin="<?php echo $coin; ?>">
-                                        <i class="fas fa-arrow-up"></i> Withdraw
-                                    </button>
-                                </div>
+                                <p class="font-medium">$<?php echo number_format($data['value'], 2); ?></p>
                             </div>
                             <?php endforeach; ?>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Market Tab -->
-                <div class="tab-pane" id="market">
-                    <div class="dashboard-card full-width">
-                        <div class="card-header">
-                            <div>
-                                <h2>Market Prices</h2>
-                                <p class="card-subtitle">Real-time cryptocurrency prices</p>
-                            </div>
-                            <button class="refresh-button" id="refresh-prices">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="market-table">
-                                <div class="market-table-header">
-                                    <div class="market-col coin-col">Coin</div>
-                                    <div class="market-col price-col">Price</div>
-                                    <div class="market-col change-col">24h Change</div>
-                                    <div class="market-col action-col">Action</div>
-                                </div>
-                                <div class="market-table-body">
-                                    <?php foreach ($coinData as $coin): ?>
-                                    <div class="market-row">
-                                        <div class="market-col coin-col">
-                                            <div class="coin-info">
-                                                <div class="coin-icon <?php echo strtolower($coin['symbol']); ?>">
-                                                    <?php echo substr($coin['symbol'], 0, 1); ?>
-                                                </div>
-                                                <div>
-                                                    <p class="coin-name"><?php echo $coin['name']; ?></p>
-                                                    <p class="coin-symbol"><?php echo $coin['symbol']; ?></p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="market-col price-col">
-                                            <p class="coin-price">$<?php echo number_format($coin['price'], 2); ?></p>
-                                        </div>
-                                        <div class="market-col change-col">
-                                            <p class="coin-change <?php echo $coin['change24h'] >= 0 ? 'positive' : 'negative'; ?>">
-                                                <?php echo $coin['change24h'] >= 0 ? '+' : ''; ?><?php echo $coin['change24h']; ?>%
-                                            </p>
-                                        </div>
-                                        <div class="market-col action-col">
-                                            <button class="btn btn-outline btn-sm trade-btn" data-coin="<?php echo $coin['symbol']; ?>">
-                                                Trade
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <!-- Quick Actions Card -->
+                <div class="card dashboard-card bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
+                    <div class="card-header">
+                        <h2 class="text-xl font-bold">Quick Actions</h2>
                     </div>
-
-                    <div class="dashboard-card full-width">
-                        <div class="card-header">
-                            <h2>Market Chart</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="market-chart-container">
-                                <div class="chart-controls">
-                                    <div class="coin-selector">
-                                        <?php foreach (array_slice($coinData, 0, 3) as $index => $coin): ?>
-                                        <button class="coin-button <?php echo $index === 0 ? 'active' : ''; ?>" data-coin="<?php echo $coin['symbol']; ?>">
-                                            <?php echo $coin['symbol']; ?>/USD
-                                        </button>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <div class="timeframe-selector">
-                                        <button class="timeframe-button">1D</button>
-                                        <button class="timeframe-button active">1W</button>
-                                        <button class="timeframe-button">1M</button>
-                                        <button class="timeframe-button">1Y</button>
-                                    </div>
-                                </div>
-                                <div class="market-chart" id="market-chart"></div>
-                                <div class="chart-info-overlay">
-                                    <h3>BTC/USD</h3>
-                                    <p class="price-up">$<?php echo number_format($coinData[0]['price'], 2); ?> <span>+<?php echo $coinData[0]['change24h']; ?>%</span></p>
-                                    <div class="chart-stats">
-                                        <div>
-                                            <p class="stat-label">24h High</p>
-                                            <p class="stat-value">$<?php echo number_format($coinData[0]['price'] * 1.05, 2); ?></p>
-                                        </div>
-                                        <div>
-                                            <p class="stat-label">24h Low</p>
-                                            <p class="stat-value">$<?php echo number_format($coinData[0]['price'] * 0.95, 2); ?></p>
-                                        </div>
-                                        <div>
-                                            <p class="stat-label">24h Volume</p>
-                                            <p class="stat-value">$1.2B</p>
-                                        </div>
-                                        <div>
-                                            <p class="stat-label">Market Cap</p>
-                                            <p class="stat-value">$825.4B</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="chart-timeline weekly">
-                                    <span>Mon</span>
-                                    <span>Tue</span>
-                                    <span>Wed</span>
-                                    <span>Thu</span>
-                                    <span>Fri</span>
-                                    <span>Sat</span>
-                                    <span>Sun</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="card-body space-y-4">
+                        <a href="deposit.php" class="btn btn-primary w-full flex items-center justify-center">
+                            <i class="fas fa-arrow-down mr-2"></i> Add Funds
+                        </a>
+                        <a href="send.php" class="btn btn-secondary w-full flex items-center justify-center">
+                            <i class="fas fa-paper-plane mr-2"></i> Send Funds
+                        </a>
+                        <a href="withdraw.php" class="btn w-full flex items-center justify-center bg-slate-700 text-white hover:bg-slate-600 transition-colors">
+                            <i class="fas fa-arrow-up mr-2"></i> Withdraw
+                        </a>
                     </div>
                 </div>
 
-                <!-- Transactions Tab -->
-                <div class="tab-pane" id="transactions">
-                    <div class="dashboard-card full-width">
-                        <div class="card-header">
-                            <h2>Transaction History</h2>
-                            <p class="card-subtitle">View all your deposits and withdrawals</p>
-                        </div>
-                        <div class="card-body">
-                            <div class="transactions-list full">
-                                <?php if (empty($transactions)): ?>
-                                <p class="no-data">No transactions found</p>
-                                <?php else: ?>
-                                    <?php foreach ($transactions as $tx): ?>
-                                    <div class="transaction-item large">
-                                        <div class="transaction-info">
-                                            <div class="transaction-icon large <?php echo $tx['type']; ?>">
-                                                <i class="fas fa-<?php echo $tx['type'] === 'deposit' ? 'arrow-down' : 'arrow-up'; ?>"></i>
-                                            </div>
-                                            <div>
-                                                <p class="transaction-type large"><?php echo ucfirst($tx['type']); ?></p>
-                                                <p class="transaction-date"><?php echo date('M d, Y H:i', strtotime($tx['date'])); ?></p>
-                                            </div>
+                <!-- Recent Transactions Card -->
+                <div class="card dashboard-card bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 col-span-2 shadow-xl shadow-indigo-900/20">
+                    <div class="card-header">
+                        <h2 class="text-xl font-bold">Recent Transactions</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="space-y-4">
+                            <?php if (empty($transactions)): ?>
+                            <p class="text-center text-slate-400 py-4">No transactions yet</p>
+                            <?php else: ?>
+                                <?php foreach ($transactions as $tx): ?>
+                                <div class="flex items-center justify-between p-3 bg-slate-700/50 rounded-md hover:bg-slate-700/70 transition-colors">
+                                    <div class="flex items-center">
+                                        <div class="p-2 rounded-full <?php echo $tx['type'] === 'deposit' ? 'bg-green-500/30 text-green-200' : 'bg-red-500/30 text-red-200'; ?> mr-3">
+                                            <i class="fas <?php echo $tx['type'] === 'deposit' ? 'fa-arrow-down' : 'fa-arrow-up'; ?>"></i>
                                         </div>
-                                        <div class="transaction-details">
-                                            <p class="transaction-amount large <?php echo $tx['type']; ?>">
-                                                <?php echo $tx['type'] === 'deposit' ? '+' : '-'; ?><?php echo $tx['amount']; ?> <?php echo $tx['coin']; ?>
-                                            </p>
-                                            <p class="transaction-status <?php echo $tx['status']; ?>">
-                                                Status: <span><?php echo ucfirst($tx['status']); ?></span>
-                                            </p>
+                                        <div>
+                                            <p class="font-medium"><?php echo ucfirst($tx['type']); ?></p>
+                                            <p class="text-xs text-slate-400"><?php echo date('M j, Y', strtotime($tx['date'])); ?></p>
                                         </div>
                                     </div>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </div>
+                                    <div class="text-right">
+                                        <p class="font-medium <?php echo $tx['type'] === 'deposit' ? 'text-green-500' : 'text-red-500'; ?>">
+                                            <?php echo $tx['type'] === 'deposit' ? '+' : '-'; ?><?php echo $tx['amount']; ?> <?php echo $tx['coin']; ?>
+                                        </p>
+                                        <p class="text-xs text-slate-400"><?php echo $tx['status']; ?></p>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <button class="tab-link text-indigo-400 hover:text-indigo-300 transition-colors" data-tab="transactions">
+                                View all transactions
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
 
-    <!-- Modals -->
-    <!-- QR Code Modal -->
-    <div class="modal" id="qr-modal">
-        <div class="modal-content">
-            <button class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2>Deposit <span id="qr-coin">BTC</span></h2>
-            <p class="modal-subtitle">Scan this QR code or copy the address to deposit funds</p>
-            <div class="qr-container">
-                <div id="qr-code"></div>
+        <!-- Wallet Tab -->
+        <div class="tab-content hidden" data-tab="wallet">
+            <div class="card dashboard-card bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
+                <div class="card-header">
+                    <h2 class="text-xl font-bold">Your Wallets</h2>
+                    <p class="text-sm text-slate-400">Manage your cryptocurrency wallets</p>
+                </div>
+                <div class="card-body space-y-6">
+                    <?php foreach ($wallets as $coin => $data): ?>
+                    <div class="p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-colors">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center">
+                                <div class="crypto-icon crypto-icon-<?php echo strtolower($coin); ?> w-10 h-10">
+                                    <?php echo substr($coin, 0, 1); ?>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold">
+                                        <?php 
+                                        echo $coin === 'BTC' ? 'Bitcoin' : 
+                                             ($coin === 'ETH' ? 'Ethereum' : 'Tether');
+                                        ?>
+                                    </h3>
+                                    <p class="text-sm text-slate-400"><?php echo $coin; ?></p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold"><?php echo $data['balance']; ?> <?php echo $coin; ?></p>
+                                <p class="text-sm text-slate-400">$<?php echo number_format($data['value'], 2); ?></p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col space-y-2">
+                            <div class="flex items-center justify-between bg-slate-800 p-3 rounded">
+                                <span class="text-sm text-slate-400">Wallet Address</span>
+                                <div class="flex items-center">
+                                    <span class="text-sm mr-2 font-mono text-indigo-300">
+                                        <?php 
+                                        $address = $data['address'];
+                                        echo substr($address, 0, 6) . '...' . substr($address, -6);
+                                        ?>
+                                    </span>
+                                    <button class="copy-to-clipboard p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30 rounded-md transition-colors" data-clipboard-text="<?php echo $data['address']; ?>">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <a href="qr.php?coin=<?php echo $coin; ?>" class="p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30 rounded-md transition-colors">
+                                        <i class="fas fa-qrcode"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3 mt-4">
+                            <a href="deposit.php?coin=<?php echo $coin; ?>" class="btn btn-primary flex items-center justify-center">
+                                <i class="fas fa-arrow-down mr-2"></i> Deposit
+                            </a>
+                            <a href="send.php?coin=<?php echo $coin; ?>" class="btn btn-secondary flex items-center justify-center">
+                                <i class="fas fa-paper-plane mr-2"></i> Send
+                            </a>
+                            <a href="withdraw.php?coin=<?php echo $coin; ?>" class="btn flex items-center justify-center bg-slate-700 text-white hover:bg-slate-600 transition-colors">
+                                <i class="fas fa-arrow-up mr-2"></i> Withdraw
+                            </a>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Wallet Address</label>
-                <div class="copy-input">
-                    <input type="text" id="wallet-address" readonly>
-                    <button class="copy-button" id="copy-address">
-                        <i class="fas fa-copy"></i>
+        </div>
+
+        <!-- Market Tab -->
+        <div class="tab-content hidden" data-tab="market">
+            <div class="card dashboard-card bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
+                <div class="card-header flex flex-row items-center justify-between pb-2">
+                    <div>
+                        <h2 class="text-xl font-bold">Market Prices</h2>
+                        <p class="text-sm text-slate-400">Real-time cryptocurrency prices</p>
+                    </div>
+                    <button id="refresh-market" class="p-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors">
+                        <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
-            </div>
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <div>
-                    <p class="alert-title">Important</p>
-                    <p>Only send <span id="alert-coin">BTC</span> to this address. Sending any other cryptocurrency may result in permanent loss.</p>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-primary" id="simulate-deposit">Simulate Deposit (Demo)</button>
-                <button class="btn btn-outline modal-close-btn">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Send Funds Modal -->
-    <div class="modal" id="send-modal">
-        <div class="modal-content">
-            <button class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2>Send <span id="send-coin">BTC</span></h2>
-            <p class="modal-subtitle">Send cryptocurrency to another wallet address</p>
-            <div class="form-group">
-                <label>Available Balance</label>
-                <div class="balance-display">
-                    <span id="available-balance">0.0345 BTC</span>
-                    <span id="available-value">$1,468.60</span>
-                </div>
-            </div>
-            <form id="send-form">
-                <div class="form-group">
-                    <label for="send-amount">Amount to Send</label>
-                    <input type="number" id="send-amount" placeholder="0.00" step="0.0001" required>
-                </div>
-                <div class="form-group">
-                    <label for="recipient-address">Recipient Address</label>
-                    <input type="text" id="recipient-address" placeholder="Enter wallet address" required>
-                </div>
-                <div class="form-group">
-                    <div class="label-with-link">
-                        <label for="security-key">Security Key</label>
-                        <a href="#" id="recover-key-link">Recover your security key</a>
-                    </div>
-                    <input type="password" id="security-key" placeholder="Enter your security key" required>
-                </div>
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <div>
-                        <p class="alert-title">Security Notice</p>
-                        <p>Double-check the recipient address. Cryptocurrency transactions cannot be reversed.</p>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline modal-close-btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Send <span id="send-btn-coin">BTC</span></button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Withdraw Funds Modal -->
-    <div class="modal" id="withdraw-modal">
-        <div class="modal-content">
-            <button class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2>Withdraw Funds</h2>
-            <p class="modal-subtitle">Enter your security key to authorize this withdrawal</p>
-            <form id="withdraw-form">
-                <div class="form-group">
-                    <label for="withdraw-amount">Withdrawal Amount</label>
-                    <input type="number" id="withdraw-amount" placeholder="0.00" step="0.0001" required>
-                </div>
-                <div class="form-group">
-                    <label for="withdraw-address">Destination Address</label>
-                    <input type="text" id="withdraw-address" placeholder="Enter wallet address" required>
-                </div>
-                <div class="form-group">
-                    <div class="label-with-link">
-                        <label for="withdraw-key">Security Key</label>
-                        <a href="#" id="withdraw-recover-link">Recover your security key</a>
-                    </div>
-                    <input type="password" id="withdraw-key" placeholder="Enter your security key" required>
-                </div>
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <div>
-                        <p class="alert-title">Security Notice</p>
-                        <p>Never share your security key with anyone. Our team will never ask for it.</p>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline modal-close-btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Confirm Withdrawal</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Security Key Recovery Modal -->
-    <div class="modal" id="recovery-modal">
-        <div class="modal-content">
-            <button class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2>Security Key Recovery</h2>
-            <p class="modal-subtitle">Recover your security key by completing the verification process</p>
-            <div class="recovery-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="recovery-progress" style="width: 33.33%;"></div>
-                </div>
-                <div class="progress-labels">
-                    <span>Email</span>
-                    <span>Payment</span>
-                    <span>Complete</span>
-                </div>
-            </div>
-            <div class="recovery-steps">
-                <!-- Step 1: Email -->
-                <div class="recovery-step active" id="recovery-step-1">
-                    <div class="form-group">
-                        <label for="recovery-email">Email Address</label>
-                        <input type="email" id="recovery-email" placeholder="your.email@example.com" required>
-                    </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <div>
-                            <p class="alert-title">Verification Required</p>
-                            <p>We'll send your new security key to this email after payment verification.</p>
+                <div class="card-body">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-12 text-sm font-medium text-slate-400 p-2">
+                            <div class="col-span-5">Coin</div>
+                            <div class="col-span-3 text-right">Price</div>
+                            <div class="col-span-2 text-right">24h Change</div>
+                            <div class="col-span-2 text-right">Action</div>
                         </div>
-                    </div>
-                    <button class="btn btn-primary btn-block" id="recovery-next-1">Continue <i class="fas fa-arrow-right"></i></button>
-                </div>
-                
-                <!-- Step 2: Payment -->
-                <div class="recovery-step" id="recovery-step-2">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <div>
-                            <p class="alert-title">Payment Required</p>
-                            <p>To recover your security key, please send 300 USDT to the address below.</p>
+                        <hr class="border-slate-700">
+                        <?php foreach ($coins as $coin): ?>
+                        <div class="grid grid-cols-12 items-center py-3 hover:bg-slate-700/30 rounded-md px-2 transition-colors">
+                            <div class="col-span-5 flex items-center">
+                                <div class="crypto-icon crypto-icon-<?php echo strtolower($coin['symbol']); ?>">
+                                    <?php echo substr($coin['symbol'], 0, 1); ?>
+                                </div>
+                                <div>
+                                    <p class="font-medium"><?php echo $coin['name']; ?></p>
+                                    <p class="text-xs text-slate-400"><?php echo $coin['symbol']; ?></p>
+                                </div>
+                            </div>
+                            <div class="col-span-3 text-right">
+                                <p class="font-medium">$<?php echo number_format($coin['price'], 2); ?></p>
+                            </div>
+                            <div class="col-span-2 text-right">
+                                <p class="font-medium <?php echo $coin['change24h'] >= 0 ? 'text-green-500' : 'text-red-500'; ?>">
+                                    <?php echo $coin['change24h'] >= 0 ? '+' : ''; ?><?php echo $coin['change24h']; ?>%
+                                </p>
+                            </div>
+                            <div class="col-span-2 text-right">
+                                <a href="trade.php?coin=<?php echo $coin['symbol']; ?>" class="px-3 py-1 border border-indigo-600 text-indigo-400 hover:bg-indigo-900/30 rounded-md transition-colors inline-block text-sm">
+                                    Trade
+                                </a>
+                            </div>
                         </div>
+                        <?php endforeach; ?>
                     </div>
-                    <div class="payment-info">
-                        <p class="payment-label">Send 300 USDT to:</p>
-                        <div class="copy-input">
-                            <input type="text" value="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" readonly>
-                            <button class="copy-button" id="copy-payment-address">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                        </div>
-                        <div class="payment-qr">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" alt="Payment QR Code">
-                        </div>
-                        <p class="payment-note">After sending the payment, click "Verify Payment" below.</p>
-                    </div>
-                    <button class="btn btn-primary btn-block" id="recovery-next-2">Verify Payment</button>
-                </div>
-                
-                <!-- Step 3: Complete -->
-                <div class="recovery-step" id="recovery-step-3">
-                    <div class="recovery-success">
-                        <div class="success-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3>Recovery Successful!</h3>
-                        <p>Your new security key has been generated and sent to your email address.</p>
-                    </div>
-                    <button class="btn btn-primary btn-block modal-close-btn">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <button class="modal-close">
-                <i class="fas fa-times"></i>
-            </button>
-            <h2>Account Settings</h2>
-            <p class="modal-subtitle">Manage your personal information and preferences</p>
-            <form id="settings-form">
-                <div class="settings-section">
-                    <h3>Personal Information</h3>
-                    <div class="form-group">
-                        <label for="full-name">Full Name</label>
-                        <input type="text" id="full-name" value="<?php echo htmlspecialchars($username); ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="email-address">Email Address</label>
-                        <input type="email" id="email-address" value="user@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="phone-number">Phone Number</label>
-                        <input type="tel" id="phone-number" value="+1 (555) 123-4567">
-                    </div>
-                </div>
-                
-                <div class="settings-divider"></div>
-                
-                <div class="settings-section">
-                    <h3>Security</h3>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <p class="setting-name">Two-Factor Authentication</p>
-                            <p class="setting-description">Add an extra layer of security to your account</p>
-                        </div>
-                        <div class="setting-control">
-                            <button type="button" class="btn btn-outline" id="tfa-toggle">Disabled</button>
-                        </div>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <p class="setting-name">Change Security Key</p>
-                            <p class="setting-description">Update your account recovery key</p>
-                        </div>
-                        <div class="setting-control">
-                            <button type="button" class="btn btn-outline">Change Key</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="settings-divider"></div>
-                
-                <div class="settings-section">
-                    <h3>Preferences</h3>
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <p class="setting-name">Email Notifications</p>
-                            <p class="setting-description">Receive alerts for transactions and security events</p>
-                        </div>
-                        <div class="setting-control">
-                            <button type="button" class="btn btn-primary" id="notifications-toggle">Enabled</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline modal-close-btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
-    <script src="assets/js/dashboard.js"></script>
-</body>
-</html>
