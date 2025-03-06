@@ -57,7 +57,7 @@ const TradingChart: React.FC<TradingChartProps> = ({
 // Generate random price data with a realistic pattern
 function generateRandomData(points: number): number[] {
   const data: number[] = [];
-  let value = 40000 + Math.random() * 5000; // Starting around 40-45k (like BTC)
+  let value = 92000 + Math.random() * 5000; // Starting around 92-97k (like BTC)
 
   for (let i = 0; i < points; i++) {
     // Create more realistic movements
@@ -65,8 +65,8 @@ function generateRandomData(points: number): number[] {
     value += change;
 
     // Ensure value stays positive and within a reasonable range
-    value = Math.max(value, 35000);
-    value = Math.min(value, 50000);
+    value = Math.max(value, 90000);
+    value = Math.min(value, 99000);
 
     data.push(value);
   }

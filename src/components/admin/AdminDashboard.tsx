@@ -368,12 +368,14 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-800 text-white bg-[url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1600&q=80')] bg-cover bg-blend-overlay bg-opacity-90">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white bg-[url('https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1600&q=80')] bg-cover bg-blend-overlay bg-opacity-90">
       {/* Header */}
       <header className="w-full h-20 border-b border-slate-700/50 backdrop-blur-sm bg-slate-900/70 flex items-center justify-between px-6 sticky top-0 z-50">
         <div className="flex items-center space-x-4">
           <Shield className="h-8 w-8 text-indigo-400" />
-          <h1 className="text-xl font-bold">CryptoTrade Admin Panel</h1>
+          <h1 className="text-xl font-bold text-white">
+            CryptoTrade Admin Panel
+          </h1>
         </div>
         <div className="flex items-center space-x-4">
           <div className="text-right">
@@ -1055,6 +1057,80 @@ const AdminDashboard = () => {
                         </Button>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                <Separator className="bg-slate-700" />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">
+                    Binance API Integration
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Binance API Key
+                      </label>
+                      <div className="flex">
+                        <Input
+                          type="password"
+                          placeholder="Enter your Binance API key"
+                          className="bg-slate-900/50 border-slate-700"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Binance Secret Key
+                      </label>
+                      <div className="flex">
+                        <Input
+                          type="password"
+                          placeholder="Enter your Binance Secret key"
+                          className="bg-slate-900/50 border-slate-700"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Enabled Cryptocurrencies
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          className="border-green-600 text-green-400 hover:bg-green-900/30"
+                        >
+                          BTC
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                        >
+                          ETH
+                        </Button>
+                        <Button
+                          variant="default"
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          USDT
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-yellow-600 text-yellow-400 hover:bg-yellow-900/30"
+                        >
+                          BNB
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-slate-600 text-slate-400 hover:bg-slate-700"
+                        >
+                          + Add More
+                        </Button>
+                      </div>
+                    </div>
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 w-full">
+                      Save API Configuration
+                    </Button>
                   </div>
                 </div>
 

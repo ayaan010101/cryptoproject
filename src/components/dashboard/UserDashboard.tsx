@@ -37,6 +37,7 @@ import {
   AlertCircle,
   Shield,
   LogOut,
+  Mail,
 } from "lucide-react";
 
 // Mock data for demonstration
@@ -45,8 +46,8 @@ const mockCoinData = [
     id: "bitcoin",
     name: "Bitcoin",
     symbol: "BTC",
-    price: 42568.23,
-    change24h: 2.34,
+    price: 95432.78,
+    change24h: 3.45,
   },
   {
     id: "ethereum",
@@ -82,7 +83,7 @@ const mockCoinData = [
 const mockWalletData = {
   BTC: {
     balance: 0.0345,
-    value: 1468.6,
+    value: 3292.43,
     address: "bc1q9h5yx3mvy8zj053y8zle7zn5p28mqwzx9lqnf3",
   },
   ETH: {
@@ -215,8 +216,10 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
   };
 
   const handleWithdraw = () => {
-    // For demo purposes, accept any security key
-    if (securityKey) {
+    // Validate security key - in a real app this would check against a stored hash
+    const validSecurityKey = "secure123"; // This would be retrieved from database
+
+    if (securityKey === validSecurityKey) {
       // Process withdrawal
       const newTransaction = {
         id: transactions.length + 1,
@@ -238,8 +241,15 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
         `Withdrawal of ${withdrawAmount} ${withdrawCoin} initiated successfully!`,
       );
     } else {
-      // Show error
-      alert("Please enter your security key to authorize this withdrawal.");
+      // Show invalid key error with recovery option
+      if (
+        confirm(
+          "You entered an invalid security key. Click OK to recover your security key.",
+        )
+      ) {
+        setShowSecurityKeyDialog(false);
+        setShowRecoveryDialog(true);
+      }
     }
   };
 
@@ -271,12 +281,14 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 text-white bg-[url('https://images.unsplash.com/photo-1639762681057-408e52192e55?w=1600&q=80')] bg-cover bg-blend-overlay bg-opacity-90">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white bg-[url('https://images.unsplash.com/photo-1639762681057-408e52192e55?w=1600&q=80')] bg-cover bg-blend-overlay bg-opacity-90">
       {/* Header */}
-      <header className="w-full h-20 border-b border-slate-700/50 backdrop-blur-sm bg-slate-900/70 flex items-center justify-between px-6 sticky top-0 z-50">
+      <header className="w-full h-20 border-b border-indigo-700/50 backdrop-blur-sm bg-slate-900/70 flex items-center justify-between px-6 sticky top-0 z-50">
         <div className="flex items-center space-x-4">
-          <Wallet className="h-8 w-8 text-blue-400" />
-          <h1 className="text-xl font-bold">CryptoTrade Dashboard</h1>
+          <Wallet className="h-8 w-8 text-indigo-400" />
+          <h1 className="text-xl font-bold text-white">
+            CryptoTrade Dashboard
+          </h1>
         </div>
         <div className="flex items-center space-x-4">
           <div className="text-right">
@@ -286,7 +298,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
+            className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
             onClick={() => setShowSettingsDialog(true)}
           >
             <svg
@@ -319,7 +331,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 mb-8 bg-slate-800/80 backdrop-blur-sm border border-slate-700/50">
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 mb-8 bg-slate-800/80 backdrop-blur-sm border border-indigo-700/50">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="wallet">Wallet</TabsTrigger>
             <TabsTrigger value="market">Market</TabsTrigger>
@@ -329,7 +341,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 col-span-3 md:col-span-2 shadow-xl shadow-blue-900/20">
+              <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 col-span-3 md:col-span-2 shadow-xl shadow-indigo-900/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <div>
                     <CardTitle>Market Overview</CardTitle>
@@ -342,7 +354,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                     size="icon"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="text-blue-400 hover:text-blue-300"
+                    className="text-indigo-400 hover:text-indigo-300"
                   >
                     <RefreshCw
                       className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
@@ -379,28 +391,28 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 text-blue-300 border-blue-800 hover:bg-blue-900/30"
+                            className="h-8 text-indigo-300 border-indigo-800 hover:bg-indigo-900/30"
                           >
                             1H
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 bg-blue-900/40 text-blue-300 border-blue-800"
+                            className="h-8 bg-indigo-900/40 text-indigo-300 border-indigo-800"
                           >
                             1D
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 text-blue-300 border-blue-800 hover:bg-blue-900/30"
+                            className="h-8 text-indigo-300 border-indigo-800 hover:bg-indigo-900/30"
                           >
                             1W
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-8 text-blue-300 border-blue-800 hover:bg-blue-900/30"
+                            className="h-8 text-indigo-300 border-indigo-800 hover:bg-indigo-900/30"
                           >
                             1M
                           </Button>
@@ -429,7 +441,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 shadow-xl shadow-blue-900/20">
+              <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
                 <CardHeader>
                   <CardTitle>Portfolio Balance</CardTitle>
                   <CardDescription className="text-slate-400">
@@ -440,7 +452,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-slate-400">Total Balance</span>
-                      <span className="text-2xl font-bold text-blue-300">
+                      <span className="text-2xl font-bold text-indigo-300">
                         ${getTotalBalance().toFixed(2)}
                       </span>
                     </div>
@@ -475,13 +487,13 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 shadow-xl shadow-blue-900/20">
+              <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
                 <CardHeader>
                   <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Button
-                    className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700"
+                    className="w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700"
                     onClick={() => setShowQrDialog(true)}
                   >
                     <Upload className="mr-2 h-4 w-4" />
@@ -489,7 +501,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                   </Button>
                   <Button
                     variant="outline"
-                    className="w-full flex items-center justify-center border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                    className="w-full flex items-center justify-center border-indigo-600 text-indigo-400 hover:bg-indigo-900/30"
                     onClick={() => {
                       setSendCoin("BTC");
                       setShowSendDialog(true);
@@ -509,7 +521,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 col-span-2 shadow-xl shadow-blue-900/20">
+              <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 col-span-2 shadow-xl shadow-indigo-900/20">
                 <CardHeader>
                   <CardTitle>Recent Transactions</CardTitle>
                 </CardHeader>
@@ -555,7 +567,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                     <Button
                       variant="link"
                       onClick={() => setActiveTab("transactions")}
-                      className="text-blue-400 hover:text-blue-300"
+                      className="text-indigo-400 hover:text-indigo-300"
                     >
                       View all transactions
                     </Button>
@@ -567,7 +579,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
 
           {/* Wallet Tab */}
           <TabsContent value="wallet" className="space-y-6">
-            <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 shadow-xl shadow-blue-900/20">
+            <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
               <CardHeader>
                 <CardTitle>Your Wallets</CardTitle>
                 <CardDescription className="text-slate-400">
@@ -614,14 +626,14 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                           Wallet Address
                         </span>
                         <div className="flex items-center">
-                          <span className="text-sm mr-2 font-mono text-blue-300">
+                          <span className="text-sm mr-2 font-mono text-indigo-300">
                             {data.address.substring(0, 6)}...
                             {data.address.substring(data.address.length - 6)}
                           </span>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
+                            className="h-8 w-8 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
                             onClick={() => {
                               navigator.clipboard.writeText(data.address);
                               alert("Address copied to clipboard!");
@@ -632,7 +644,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
+                            className="h-8 w-8 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
                             onClick={() => handleShowQr(coin)}
                           >
                             <QrCode className="h-4 w-4" />
@@ -643,7 +655,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
 
                     <div className="grid grid-cols-3 gap-3 mt-4">
                       <Button
-                        className="flex items-center justify-center bg-blue-600 hover:bg-blue-700"
+                        className="flex items-center justify-center bg-indigo-600 hover:bg-indigo-700"
                         onClick={() => handleShowQr(coin)}
                       >
                         <Upload className="mr-2 h-4 w-4" />
@@ -651,7 +663,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                       </Button>
                       <Button
                         variant="outline"
-                        className="flex items-center justify-center border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                        className="flex items-center justify-center border-indigo-600 text-indigo-400 hover:bg-indigo-900/30"
                         onClick={() => {
                           setSendCoin(coin);
                           setShowSendDialog(true);
@@ -680,7 +692,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
 
           {/* Market Tab */}
           <TabsContent value="market" className="space-y-6">
-            <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 shadow-xl shadow-blue-900/20">
+            <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <div>
                   <CardTitle>Market Prices</CardTitle>
@@ -693,7 +705,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                   size="icon"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="text-blue-400 hover:text-blue-300"
+                  className="text-indigo-400 hover:text-indigo-300"
                 >
                   <RefreshCw
                     className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
@@ -744,7 +756,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                          className="border-indigo-600 text-indigo-400 hover:bg-indigo-900/30"
                           onClick={() => {
                             alert(
                               `Trading functionality for ${coin.name} would be implemented in a production version.`,
@@ -760,7 +772,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 shadow-xl shadow-blue-900/20">
+            <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
               <CardHeader>
                 <CardTitle>Market Chart</CardTitle>
               </CardHeader>
@@ -783,8 +795,8 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                             size="sm"
                             className={
                               coin.symbol === "BTC"
-                                ? "bg-blue-600 hover:bg-blue-700"
-                                : "border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                                ? "bg-indigo-600 hover:bg-indigo-700"
+                                : "border-indigo-600 text-indigo-400 hover:bg-indigo-900/30"
                             }
                           >
                             {coin.symbol}/USD
@@ -795,28 +807,28 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 text-blue-300 border-blue-800 hover:bg-blue-900/30"
+                          className="h-8 text-indigo-300 border-indigo-800 hover:bg-indigo-900/30"
                         >
                           1D
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 bg-blue-900/40 text-blue-300 border-blue-800"
+                          className="h-8 bg-indigo-900/40 text-indigo-300 border-indigo-800"
                         >
                           1W
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 text-blue-300 border-blue-800 hover:bg-blue-900/30"
+                          className="h-8 text-indigo-300 border-indigo-800 hover:bg-indigo-900/30"
                         >
                           1M
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 text-blue-300 border-blue-800 hover:bg-blue-900/30"
+                          className="h-8 text-indigo-300 border-indigo-800 hover:bg-indigo-900/30"
                         >
                           1Y
                         </Button>
@@ -850,7 +862,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-white">
                           <div>
                             <p className="text-slate-400">24h High</p>
-                            <p className="font-medium text-blue-300">
+                            <p className="font-medium text-indigo-300">
                               $
                               {(
                                 coinData.find((c) => c.symbol === "BTC")
@@ -860,7 +872,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                           </div>
                           <div>
                             <p className="text-slate-400">24h Low</p>
-                            <p className="font-medium text-blue-300">
+                            <p className="font-medium text-indigo-300">
                               $
                               {(
                                 coinData.find((c) => c.symbol === "BTC")
@@ -870,11 +882,13 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                           </div>
                           <div>
                             <p className="text-slate-400">24h Volume</p>
-                            <p className="font-medium text-blue-300">$1.2B</p>
+                            <p className="font-medium text-indigo-300">$1.2B</p>
                           </div>
                           <div>
                             <p className="text-slate-400">Market Cap</p>
-                            <p className="font-medium text-blue-300">$825.4B</p>
+                            <p className="font-medium text-indigo-300">
+                              $825.4B
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -897,7 +911,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
 
           {/* Transactions Tab */}
           <TabsContent value="transactions" className="space-y-6">
-            <Card className="bg-slate-800/80 backdrop-blur-sm border-slate-700/50 shadow-xl shadow-blue-900/20">
+            <Card className="bg-slate-800/80 backdrop-blur-sm border-indigo-700/50 shadow-xl shadow-indigo-900/20">
               <CardHeader>
                 <CardTitle>Transaction History</CardTitle>
                 <CardDescription className="text-slate-400">
@@ -991,11 +1005,29 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm font-medium">Withdrawal Details</label>
+              <div className="p-3 bg-slate-900 border border-slate-700 rounded-md">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-slate-400">Currency</span>
+                  <span className="font-medium text-white">USDT</span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-slate-400">Network</span>
+                  <span className="font-medium text-white">TRC20</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-400">Fee</span>
+                  <span className="font-medium text-white">1.00 USDT</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium">Security Key</label>
                 <Button
                   variant="link"
-                  className="text-xs p-0 h-auto text-blue-400 hover:text-blue-300"
+                  className="text-xs p-0 h-auto text-indigo-400 hover:text-indigo-300"
                   onClick={() => {
                     setShowSecurityKeyDialog(false);
                     setShowRecoveryDialog(true);
@@ -1036,7 +1068,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
             <Button
               onClick={handleWithdraw}
               disabled={!securityKey || !withdrawAmount || !withdrawAddress}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
               Confirm Withdrawal
             </Button>
@@ -1089,6 +1121,41 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                     verification.
                   </AlertDescription>
                 </Alert>
+
+                <div className="flex flex-col space-y-2 mt-4">
+                  <p className="text-sm text-slate-400">
+                    Need help? Contact us:
+                  </p>
+                  <div className="flex space-x-4">
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      Email Support
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-green-600 text-green-400 hover:bg-green-900/30"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mr-2"
+                      >
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      WhatsApp
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1108,13 +1175,13 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 <div className="p-4 bg-slate-900 rounded-md">
                   <p className="text-sm font-medium mb-2">Send 300 USDT to:</p>
                   <div className="flex items-center justify-between bg-slate-800 p-3 rounded mb-4">
-                    <span className="text-sm font-mono text-blue-300">
+                    <span className="text-sm font-mono text-indigo-300">
                       0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
                     </span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
+                      className="h-8 w-8 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
                       onClick={() => {
                         navigator.clipboard.writeText(
                           "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
@@ -1139,6 +1206,41 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                   <p className="text-sm text-slate-400 text-center">
                     After sending the payment, click "Verify Payment" below.
                   </p>
+                </div>
+
+                <div className="flex flex-col space-y-2 mt-4">
+                  <p className="text-sm text-slate-400">
+                    Need help with payment? Contact us:
+                  </p>
+                  <div className="flex space-x-4">
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                    >
+                      <Mail className="mr-2 h-4 w-4" />
+                      Email Support
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-green-600 text-green-400 hover:bg-green-900/30"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mr-2"
+                      >
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      WhatsApp
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1170,7 +1272,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 <Button
                   onClick={handleRecoveryNext}
                   disabled={recoveryStep === 1 && !recoveryEmail}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-indigo-600 hover:bg-indigo-700"
                 >
                   {recoveryStep === 1
                     ? "Continue"
@@ -1182,7 +1284,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
             ) : (
               <Button
                 onClick={() => setShowRecoveryDialog(false)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-indigo-600 hover:bg-indigo-700"
               >
                 Close
               </Button>
@@ -1221,12 +1323,12 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                     walletData[selectedWallet as keyof typeof walletData]
                       ?.address || ""
                   }
-                  className="bg-slate-900 border-slate-700 font-mono text-blue-300"
+                  className="bg-slate-900 border-slate-700 font-mono text-indigo-300"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="ml-2 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30"
+                  className="ml-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/30"
                   onClick={() => {
                     navigator.clipboard.writeText(
                       walletData[selectedWallet as keyof typeof walletData]
@@ -1282,7 +1384,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                       value:
                         prev[selectedWallet as keyof typeof prev].value +
                         (selectedWallet === "BTC"
-                          ? newTransaction.amount * 42568.23
+                          ? newTransaction.amount * 95432.78
                           : selectedWallet === "ETH"
                             ? newTransaction.amount * 2356.78
                             : newTransaction.amount),
@@ -1294,7 +1396,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                   );
                 }, 1000);
               }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
               Simulate Deposit (Demo)
             </Button>
@@ -1362,7 +1464,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 <label className="text-sm font-medium">Security Key</label>
                 <Button
                   variant="link"
-                  className="text-xs p-0 h-auto text-blue-400 hover:text-blue-300"
+                  className="text-xs p-0 h-auto text-indigo-400 hover:text-indigo-300"
                   onClick={() => {
                     setShowSendDialog(false);
                     setShowRecoveryDialog(true);
@@ -1452,7 +1554,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                     value:
                       prev[sendCoin as keyof typeof prev].value -
                       (sendCoin === "BTC"
-                        ? amount * 42568.23
+                        ? amount * 95432.78
                         : sendCoin === "ETH"
                           ? amount * 2356.78
                           : amount),
@@ -1469,7 +1571,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 );
               }}
               disabled={!sendSecurityKey || !sendAmount || !sendAddress}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
               Send {sendCoin}
             </Button>
@@ -1489,7 +1591,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
 
           <div className="py-4 space-y-6">
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-blue-400">
+              <h3 className="text-sm font-medium text-indigo-400">
                 Personal Information
               </h3>
               <div className="space-y-3">
@@ -1539,7 +1641,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
             <Separator className="bg-slate-700" />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-blue-400">Security</h3>
+              <h3 className="text-sm font-medium text-indigo-400">Security</h3>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Two-Factor Authentication</p>
@@ -1559,8 +1661,8 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                   }
                   className={
                     userSettings.twoFactorEnabled
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                      ? "bg-indigo-600 hover:bg-indigo-700"
+                      : "border-indigo-600 text-indigo-400 hover:bg-indigo-900/30"
                   }
                 >
                   {userSettings.twoFactorEnabled ? "Enabled" : "Disabled"}
@@ -1575,7 +1677,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 </div>
                 <Button
                   variant="outline"
-                  className="border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                  className="border-indigo-600 text-indigo-400 hover:bg-indigo-900/30"
                 >
                   Change Key
                 </Button>
@@ -1585,7 +1687,9 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
             <Separator className="bg-slate-700" />
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-blue-400">Preferences</h3>
+              <h3 className="text-sm font-medium text-indigo-400">
+                Preferences
+              </h3>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Email Notifications</p>
@@ -1605,8 +1709,8 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                   }
                   className={
                     userSettings.notificationsEnabled
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "border-blue-600 text-blue-400 hover:bg-blue-900/30"
+                      ? "bg-indigo-600 hover:bg-indigo-700"
+                      : "border-indigo-600 text-indigo-400 hover:bg-indigo-900/30"
                   }
                 >
                   {userSettings.notificationsEnabled ? "Enabled" : "Disabled"}
@@ -1628,7 +1732,7 @@ const UserDashboard = ({ username = "User" }: UserDashboardProps) => {
                 setShowSettingsDialog(false);
                 alert("Settings saved successfully!");
               }}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
               Save Changes
             </Button>
