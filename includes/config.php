@@ -1,8 +1,8 @@
 <?php
 // Database configuration
 $db_host = 'localhost';
-$db_user = 'your_db_username'; // Change this to your database username
-$db_pass = 'your_db_password'; // Change this to your database password
+$db_user = 'admin'; // Database username
+$db_pass = 'admin123'; // Database password
 $db_name = 'crypto_trading';
 
 // Create database connection
